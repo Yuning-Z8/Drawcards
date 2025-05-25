@@ -1,4 +1,4 @@
-#5.2.19
+#5.2.21
 import random as r
 import json
 import os
@@ -185,7 +185,7 @@ def save(val = None):
     global result, users, card, nres
     print('保存中...')
     if not nres:
-        users[current_user]['results'].pop()#have problem
+        users[current_user]['results'].pop()
     users[current_user]['results'].append(result)
     nres = False
     users[current_user]['option'] = [opt_print_result, opt_show_res, opt_round_extent, times_once]
@@ -395,7 +395,7 @@ def read_res(val: list[str | int] = [-1]):
 
 def sign_in(val: list[str] | None = None):
     """用户登录/注册"""
-    global current_user
+    global current_user, nres
     if val is None:
         error('你应该输入用户名和密码')
         return
@@ -427,6 +427,7 @@ def sign_in(val: list[str] | None = None):
         if input_hash == stored_hash:
             current_user = username
             print(f"欢迎回来, {username}!")
+            nres = True
             # 加载用户设置
             global opt_print_result, opt_show_res, opt_round_extent, times_once
             user_opts = users[username]["option"]
@@ -468,6 +469,7 @@ def sign_out(val = None):
     save()
     print(f"再见, {current_user}!")
     current_user = None
+    new_res()
 
 #main
 def set_times(val: list[str] | None = None):
@@ -734,6 +736,7 @@ def change_long(val: list[str | zint] | None = None):
             card['name'] += [''] * (nlen - card['len'])
             card['probability'] += [0] * (nlen - card['len'] - 1)
             nproba = 0
+            ctn = True
             for i in range(card['len'], nlen):
                 while True:
                     nname = need(input(f'设置第{i + 1}项的名称:'), str)
@@ -744,11 +747,19 @@ def change_long(val: list[str | zint] | None = None):
                         nprob = need(input(f'设置第{i + 1}项的概率:'), zfloat)
                     nbaodi = need(input(f'设置第{i + 1}项的保底（0为无）:'), zint)
                     if nname is None or nprob is None or nbaodi is None:
-                        warn('usu.,reinput the val')
+                        warn('你应该输入要求的内容')
+                        ctn = boolyn(input('是否继续输入[y/n] '))
+                        if ctn is None:
+                            warn('你应该输入y或n,使用默认值y')
+                            ctn = True
+                        if not ctn:
+                            break
                     else:
                         nprob = round(nprob, 15)
                         break
-                nproba += nprob
+                if not ctn:
+                    break
+                nproba += nprob # type: ignore
                 card['baodi'][i] = nbaodi
                 card['name'][i] = nname
                 if nprob != 0:
